@@ -16,7 +16,7 @@ Example:
 Context:  J.K. Rowling wrote the Harry Potter series.
 Question: Who wrote Harry Potter?
 Answer:   J.K. Rowling
-
+```
 ---
 
 ## 🧠 Core Understanding
