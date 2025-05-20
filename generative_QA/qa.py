@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset,DataLoader
 from transformers import T5Tokenizer,T5ForConditionalGeneration,AdamW
+from nltk.translate.bleu_score import sentence_bleu
+from rouge_score import rouge_scorer
 
 class MyData(Dataset):
     def __init__(self,df,tokenizer,max_input_len=512,max_output_len=64):
@@ -69,8 +71,41 @@ def train(loader,model,device,optimizer):
         attention_mask=batch['attention_mask'].to(device)
         labels=batch['labels'].to(device)
 
-        out=model(input_ids,attention_mask,labels)
-        loss=out.loss
+        generated_ids = model.generate(
+                                input_ids=input_ids,
+                                attention_mask=attention_mask,
+                                max_length=64,
+                                do_sample=True
+                            )
+
+        decoded_pred=tokenizer.batch_decode(generated_ids,skip_special_tokens=True)
+        decoded_labels=tokenizer.batch_decode(labels,skip_special_tokens=True)
+
+        scorer=rouge_scorer.RougeScorer(['rougeL'],use_stemmer=True)
+        rewards=[]
+
+        for pred,ref in zip(decoded_pred,decoded_labels):
+            # BLEU
+            #bleu=sentence_bleu([ref.split()],pred.split())
+            #rewards.append(bleu)
+
+            # ROUGE
+            rouge=scorer.score(ref,pred)['rougeL'].fmeasure
+            rewards.append(rouge)
+        generate_out = model(input_ids=input_ids, attention_mask=attention_mask, decoder_input_ids=generated_ids)
+        logits=generate_out.logits
+        log_probs=nn.functional.log_softmax(logits,dim=-1)
+
+        gen_log_probs=torch.gather(
+            log_probs,2,generated_ids.unsqueeze(-1)
+        ).squeeze(-1)
+
+        pad_mask=(generated_ids!=tokenizer.pad_token_id).float()
+        log_probs_sum=(pad_mask*gen_log_probs).sum(dim=-1)
+
+        reward_tensor=torch.tensor(rewards,device=device)
+        reward_tensor=(reward_tensor-reward_tensor.mean())/(reward_tensor.std()+1e-8)
+        loss=-(log_probs_sum*reward_tensor).mean()
 
         optimizer.zero_grad()
         loss.backward()
@@ -109,8 +144,7 @@ for i in range(5):
         counter=0
         torch.save(model.state_dict(),'best_model.pth')
     else:
-        counter+=1
-    
+        counter+=1 
         if counter==patience:
             break
 
