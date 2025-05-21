@@ -37,6 +37,7 @@ The training loop uses a **reinforcement-style reward shaping approach**:
 ---
 
 ## Project Structure
+```
 rag_qa/
 ├── rag_qa.py # contains the full RAG-QA pipeline in one file: data loading, FAISS+BM25 hybrid retrieval, T5 training and evaluation
 ├── main.py # Main pipeline: loads data, trains model, runs eval
@@ -49,3 +50,4 @@ rag_qa/
 ├── test.csv # Test set
 ├── best_model.pth # Checkpoint (auto-saved if better ROUGE)
 └── README.md # This file
+```
