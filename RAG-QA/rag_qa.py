@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset,DataLoader
 from transformers import T5Tokenizer,T5ForConditionalGeneration,AdamW
+from peft import LoraConfig,get_peft_model,TaskType,PeftModel
 from nltk.translate.bleu_score import sentence_bleu
 from rouge_score import rouge_scorer
 from rank_bm25 import BM25Okapi
@@ -16,7 +17,7 @@ corpus_df=pd.read_csv('corpus.csv')
 contexts=corpus_df['context'].to_list()
 
 # FAISS
-encoder=SentenceTransformer('all-MiniLM-L6-v2')
+encoder=SentenceTransformer('./all-MiniLM-L6-v2')
 contexts_embedding=encoder.encode(contexts,show_progress_bar=True,convert_to_numpy=True)# embedding corpus, contexts_embedding' shape: (number of contexts, dimension(typically 384))
 dimension=contexts_embedding.shape[1]
 faiss_index=faiss.IndexFlatL2(dimension)
@@ -151,7 +152,22 @@ test_df=pd.read_csv('test.csv')
 
 tokenizer=T5Tokenizer.from_pretrained('../t5')
 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 model=T5ForConditionalGeneration.from_pretrained('../t5').to(device)
+lora_config = LoraConfig(
+    r=8,
+    lora_alpha=16,
+    target_modules=["q", "v"],  # T5 uses "q", "k", "v", "o" etc.
+    lora_dropout=0.1,
+    bias="none",
+    task_type=TaskType.SEQ_2_SEQ_LM
+)
+model = get_peft_model(model, lora_config)
+model.print_trainable_parameters()
+
+model.to(device)
+
+
 optimizer=AdamW(model.parameters(),lr=2e-5)
 
 train_data=TrainData(train_df,corpus_df,tokenizer)
@@ -254,24 +270,25 @@ def test(loader,model,device):
     return reward
 
 best_score=0
-patience=3
+patience=5
 counter=0
-for i in range(5):
+for i in range(50):
     train_loss=train(train_loader,model,optimizer,device)
     dev_score=test(dev_loader,model,device)
-    print(f'train loss:{train_loss:.2f}, validation rouge reward:{dev_score:.2f}')
+    print(f'epoch{i+1}, train loss:{train_loss:.2f}, validation rouge reward:{dev_score:.2f}')
 
     if best_score<dev_score:
         best_score=dev_score
         counter=0
-        torch.save(model.state_dict(),'best_model.pth')
+        model.save_pretrained('lora_adapter')
     else:
         counter+=1
         if counter==patience:
             print('activate early stop!')
             break
 
-model.load_state_dict(torch.load('best_model.pth'))
+base_model = T5ForConditionalGeneration.from_pretrained('../t5')
+model = PeftModel.from_pretrained(base_model, 'lora_adapter')
 model.to(device)
 test_reward=test(test_loader,model,device)
 print(f'test ROUGE score:{test_reward:.2f}')
