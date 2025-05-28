@@ -6,7 +6,7 @@ This project implements a **Retrieval-Augmented Generation (RAG)** pipeline usin
 
 A **T5-based generator** is then used to produce answers from the retrieved context.
 
-Now with support for **LoRA (Low-Rank Adaptation)** for efficient fine-tuning.
+Now with support of **LoRA (Low-Rank Adaptation)** for efficient fine-tuning.
 
 ---
 
@@ -15,10 +15,10 @@ Now with support for **LoRA (Low-Rank Adaptation)** for efficient fine-tuning.
 ✅ FAISS dense vector retrieval  
 ✅ BM25 reranking within FAISS shortlist  
 ✅ T5 model for question answering  
-✅ Supports both ROUGE-L and BLEU evaluation metrics
-✅ Reinforcement-style training 
-✅ Easy-to-switch modular codebase
-✅ LoRA support for efficient parameter tuning
+✅ Supports both ROUGE-L and BLEU evaluation metrics  
+✅ Reinforcement-style training  
+✅ Easy-to-switch modular codebase  
+✅ LoRA support for efficient parameter tuning  
 
 ---
 ## Retrieval Modes
