@@ -6,6 +6,8 @@ This project implements a **Retrieval-Augmented Generation (RAG)** pipeline usin
 
 A **T5-based generator** is then used to produce answers from the retrieved context.
 
+Now with support for **LoRA (Low-Rank Adaptation)** for efficient fine-tuning.
+
 ---
 
 ## Features
@@ -16,6 +18,7 @@ A **T5-based generator** is then used to produce answers from the retrieved cont
 ✅ Supports both ROUGE-L and BLEU evaluation metrics
 ✅ Reinforcement-style training 
 ✅ Easy-to-switch modular codebase
+✅ LoRA support for efficient parameter tuning
 
 ---
 ## Retrieval Modes
@@ -33,13 +36,14 @@ The training loop uses a **reinforcement-style reward shaping approach**:
 - The model generates answers using teacher-forcing.
 - ROUGE-L or BLEU scores are computed between the generated answer and the ground truth.
 - The loss is scaled by the normalized reward, aligning model behavior with ROUGE-based or BLEU objectives.
+- LoRA is applied to the T5 model, enabling efficient fine-tuning by only training low-rank matrices.
 
 ---
 
 ## Project Structure
 ```
 rag_qa/
-├── rag_qa.py       # contains the full RAG-QA pipeline in one file: data loading, FAISS+BM25 hybrid retrieval, T5 training and evaluation
+├── rag_qa.py       # contains the full RAG-QA pipeline in one file: data loading, FAISS+BM25 hybrid retrieval, T5 with LoRA training and evaluation
 ├── main.py         # Main pipeline: loads data, trains model, runs eval
 ├── retriever.py    # FAISS & BM25 index building
 ├── dataset.py      # Dataset classes for training and hybrid retrieval
