@@ -3,12 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 
-vocab_size = 100
-embedding_dim = 64
-n_heads = 4
-seq_len = 16
-n_layers = 2
-
 class MyAttention(nn.Module):
     def __init__(self,d_model,d_k,d_v):
         super().__init__()
