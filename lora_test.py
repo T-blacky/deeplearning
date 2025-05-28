@@ -25,7 +25,7 @@ class MyAttention(nn.Module):
         super().__init__()
 
         self.Q=LoRALinear(d_model,d_model,r,alpha)
-        self.K=nn.Linear(d_model,d_model) # don't need LoRA for K since K is shared across all incoming queries,
+        self.K=nn.Linear(d_model,d_model) # don't need to use LoRA for K since K is shared across all incoming queries,
                                           # Changing K means changing the structure of the attention space for all tokens,
                                           # which will destabilize learned attention patterns from the pre-trained model
         self.V=LoRALinear(d_model,d_model,r,alpha)
